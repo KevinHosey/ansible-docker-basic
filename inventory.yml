@@ -5,5 +5,5 @@ amazon-linux-server:
   hosts:
     node01:
       ansible_port: 22
-      ansible_host: 3.70.99.172
-      ansible_ssh_private_key_file: "~/.ssh/aws-key.pem"
+      ansible_host: 16.171.38.251
+      ansible_ssh_private_key_file: "~/.ssh/threat-protection-devops-homework-24.pem"

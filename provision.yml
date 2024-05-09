@@ -61,7 +61,7 @@
 
     - name: Pull web app Docker image
       docker_image:
-        name: kevinhosey/callme-connect:latest
+        name: kevinhosey/callme-app-connect:latest
         source: pull
 
     - name: Pull nginx Docker image

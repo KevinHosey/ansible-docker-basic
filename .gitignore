@@ -1,0 +1,5 @@
+# Local ansible temporary files
+.docker_*
+
+# OSX
+.DS_Store

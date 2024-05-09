@@ -1,0 +1,90 @@
+---
+- name: Deploy Python web app using Docker Compose
+  hosts: amazon-linux-server
+  become: true
+  tasks:
+    - name: Update all packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install required packages
+      yum:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - yum-utils
+        - python3-pip
+        - libffi-devel
+        - openssl-devel
+        - python3-devel
+
+    - name: Add Docker repository
+      yum_repository:
+        name: docker-ce
+        description: Docker CE Repository
+        baseurl: https://download.docker.com/linux/centos/7/$basearch/stable
+        gpgcheck: yes
+        gpgkey: https://download.docker.com/linux/centos/gpg
+        enabled: yes
+
+    - name: Install Docker
+      yum:
+        name: docker-ce
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # Installing Docker Compose with pip would not install the latest version.
+    # This caused an incompatibility issue between Docker and Docker Compose.
+    # To solve this, I am manually installing Docker Compose
+    - name: Download and install Docker Compose
+      command: >
+        curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+      args:
+        creates: /usr/local/bin/docker-compose
+
+    - name: Set permissions for Docker Compose
+      file:
+        path: /usr/local/bin/docker-compose
+        mode: "u+x,g+x"
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Pull web app Docker image
+      docker_image:
+        name: kevinhosey/callme-connect:latest
+        source: pull
+
+    - name: Pull nginx Docker image
+      docker_image:
+        name: nginx:latest
+        source: pull
+
+    - name: Create directory for files
+      file:
+        path: /home/{{ ansible_user }}/docker/
+        state: directory
+
+    - name: Create Docker Compose file
+      template:
+        src: docker-compose.yml.j2
+        dest: /home/{{ ansible_user }}/docker/docker-compose.yml
+
+    - name: Create nginx configuration file
+      template:
+        src: nginx.conf.j2
+        dest: /home/{{ ansible_user }}/docker/nginx.conf
+
+    - name: Start Docker Compose services
+      command: docker-compose up -d
+      args:
+        chdir: /home/{{ ansible_user }}/docker

@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  web_app:
+    image: kevinhosey/callme-connect:latest
+    ports:
+      - "8000:8000"
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - /home/{{ ansible_user }}/docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web_app
